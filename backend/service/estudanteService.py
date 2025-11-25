@@ -1,113 +1,124 @@
-from typing import List, Dict, Optional
-from model.estudante import *
+from typing import Any, Dict, List, Optional
+
+from model.estudante import AtualizarEstudante, CriarEstudante, Estudante
 
 
-class estudanteService:
+class EstudanteService:
     def __init__(self):
-        self.estudante: Dict[str, estudante] = {}
+        self.estudantes: Dict[str, Estudante] = {}
 
-    def criarEstudante(self, student_data: criarestudante) -> estudante:
-        student = estudante(**student_data.dict())
-        self.estudante[student.id] = student
-        return student
+    def criar_estudante(self, dados_estudante: CriarEstudante) -> Estudante:
+        novo_estudante = Estudante(**dados_estudante.dict())
+        self.estudantes[novo_estudante.id] = novo_estudante
+        return novo_estudante
 
-    def getTodos(self) -> List[estudante]:
-        return list(self.estudante.values())
+    def listar_estudantes(self) -> List[Estudante]:
+        return list(self.estudantes.values())
 
-    def getestudanteId(self, estudante_id: str) -> Optional[estudante]:
-        return self.estudante.get(estudante_id)
+    def obter_estudante_por_id(self, estudante_id: str) -> Optional[Estudante]:
+        return self.estudantes.get(estudante_id)
 
-    def updateEstudante(self, estudante_id: str, student_data: estudanteUpdate) -> Optional[estudante]:
-        if estudante_id not in self.estudante:
+    def atualizar_estudante(
+        self, estudante_id: str, dados_estudante: AtualizarEstudante
+    ) -> Optional[Estudante]:
+        if estudante_id not in self.estudantes:
             return None
 
-        updated_student = estudante(id=estudante_id, **student_data.dict())
-        self.estudante[estudante_id] = updated_student
-        return updated_student
+        estudante_atualizado = Estudante(id=estudante_id, **dados_estudante.dict())
+        self.estudantes[estudante_id] = estudante_atualizado
+        return estudante_atualizado
 
-    def delete_student(self, estudante_id: str) -> bool:
-        if estudante_id in self.estudante:
-            del self.estudante[estudante_id]
+    def remover_estudante(self, estudante_id: str) -> bool:
+        if estudante_id in self.estudantes:
+            del self.estudantes[estudante_id]
             return True
         return False
 
-    def calculate_student_average(self, student: estudante) -> float:
-        return sum(student.grades) / len(student.grades)
+    def calcular_media_estudante(self, estudante: Estudante) -> float:
+        return sum(estudante.notas) / len(estudante.notas)
 
-    def calculate_class_average_per_subject(self) -> List[float]:
-        if not self.estudante:
+    def calcular_media_turma_por_disciplina(self) -> List[float]:
+        if not self.estudantes:
             return [0.0] * 5
 
-        estudante_list = list(self.estudante.values())
-        subject_averages = []
+        estudantes = list(self.estudantes.values())
+        medias_por_disciplina: List[float] = []
 
-        for subject_index in range(5):
-            subject_sum = sum(student.grades[subject_index] for student in estudante_list)
-            subject_avg = subject_sum / len(estudante_list)
-            subject_averages.append(round(subject_avg, 2))
+        for indice_disciplina in range(5):
+            soma_disciplina = sum(
+                estudante.notas[indice_disciplina] for estudante in estudantes
+            )
+            media_disciplina = soma_disciplina / len(estudantes)
+            medias_por_disciplina.append(round(media_disciplina, 2))
 
-        return subject_averages
+        return medias_por_disciplina
 
-    def calculate_class_average(self) -> float:
-        if not self.estudante:
+    def calcular_media_turma(self) -> float:
+        if not self.estudantes:
             return 0.0
 
-        total_average = sum(
-            self.calculate_student_average(student)
-            for student in self.estudante.values()
+        soma_medias = sum(
+            self.calcular_media_estudante(estudante)
+            for estudante in self.estudantes.values()
         )
-        return round(total_average / len(self.estudante), 2)
+        return round(soma_medias / len(self.estudantes), 2)
 
-    def get_estudante_above_average(self) -> List[Dict]:
-        class_avg = self.calculate_class_average()
+    def obter_estudantes_acima_da_media(self) -> List[Dict[str, Any]]:
+        media_turma = self.calcular_media_turma()
 
-        estudante_above = []
-        for student in self.estudante.values():
-            student_avg = self.calculate_student_average(student)
-            if student_avg > class_avg:
-                estudante_above.append({
-                    "id": student.id,
-                    "name": student.name,
-                    "average": round(student_avg, 2)
-                })
+        estudantes_acima = []
+        for estudante in self.estudantes.values():
+            media_estudante = self.calcular_media_estudante(estudante)
+            if media_estudante > media_turma:
+                estudantes_acima.append(
+                    {
+                        "id": estudante.id,
+                        "nome": estudante.nome,
+                        "media": round(media_estudante, 2),
+                    }
+                )
 
-        return estudante_above
+        return estudantes_acima
 
-    def get_estudante_below_attendance_threshold(self, threshold: float = 75.0) -> List[Dict]:
-        estudante_below = []
+    def obter_estudantes_com_baixa_frequencia(
+        self, limite: float = 75.0
+    ) -> List[Dict[str, Any]]:
+        estudantes_com_baixa_frequencia = []
 
-        for student in self.estudante.values():
-            if student.attendance < threshold:
-                estudante_below.append({
-                    "id": student.id,
-                    "name": student.name,
-                    "attendance": student.attendance
-                })
+        for estudante in self.estudantes.values():
+            if estudante.frequencia < limite:
+                estudantes_com_baixa_frequencia.append(
+                    {
+                        "id": estudante.id,
+                        "nome": estudante.nome,
+                        "frequencia": estudante.frequencia,
+                    }
+                )
 
-        return estudante_below
+        return estudantes_com_baixa_frequencia
 
-    def get_report(self) -> Dict:
-        estudante_list = self.getTodos()
+    def gerar_relatorio(self) -> Dict[str, Any]:
+        estudantes = self.listar_estudantes()
 
-        estudante_with_averages = [
+        estudantes_com_medias = [
             {
-                "id": student.id,
-                "name": student.name,
-                "grades": student.grades,
-                "attendance": student.attendance,
-                "average": round(self.calculate_student_average(student), 2)
+                "id": estudante.id,
+                "nome": estudante.nome,
+                "notas": estudante.notas,
+                "frequencia": estudante.frequencia,
+                "media": round(self.calcular_media_estudante(estudante), 2),
             }
-            for student in estudante_list
+            for estudante in estudantes
         ]
 
         return {
-            "total_estudante": len(estudante_list),
-            "estudante": estudante_with_averages,
-            "class_average": self.calculate_class_average(),
-            "class_average_per_subject": self.calculate_class_average_per_subject(),
-            "estudante_above_average": self.get_estudante_above_average(),
-            "estudante_below_attendance": self.get_estudante_below_attendance_threshold()
+            "total_estudantes": len(estudantes),
+            "estudantes": estudantes_com_medias,
+            "media_turma": self.calcular_media_turma(),
+            "medias_por_disciplina": self.calcular_media_turma_por_disciplina(),
+            "estudantes_acima_da_media": self.obter_estudantes_acima_da_media(),
+            "estudantes_com_baixa_frequencia": self.obter_estudantes_com_baixa_frequencia(),
         }
 
 
-student_service = estudanteService()
+estudante_service = EstudanteService()

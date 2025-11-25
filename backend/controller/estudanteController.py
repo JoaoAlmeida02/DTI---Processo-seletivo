@@ -1,81 +1,76 @@
 from fastapi import APIRouter, HTTPException, status
 from typing import List
-from model.student import Estudante, criarEstudante, EstudanteUpdate
-from service.student_service import student_service
+
+from model.estudante import AtualizarEstudante, CriarEstudante, Estudante
+from service.estudanteService import estudante_service
 
 router = APIRouter()
 
-@router.post("/students", response_model=Estudante, status_code=status.HTTP_201_CREATED)
-def create_student(student: criarEstudante):
-    """Cria um novo aluno"""
-    return student_service.create_student(student)
 
-@router.get("/students", response_model=List[Estudante])
-def get_students():
-    """Lista todos os alunos"""
-    return student_service.get_all_students()
+@router.post("/estudantes", response_model=Estudante, status_code=status.HTTP_201_CREATED)
+def criar_estudante(estudante: CriarEstudante):
+    return estudante_service.criar_estudante(estudante)
 
-@router.get("/students/{student_id}", response_model=Estudante)
-def get_student(student_id: str):
-    """Retorna um aluno específico"""
-    student = student_service.get_student_by_id(student_id)
-    if not student:
+
+@router.get("/estudantes", response_model=List[Estudante])
+def listar_estudantes():
+    return estudante_service.listar_estudantes()
+
+
+@router.get("/estudantes/{estudante_id}", response_model=Estudante)
+def obter_estudante(estudante_id: str):
+    estudante = estudante_service.obter_estudante_por_id(estudante_id)
+    if not estudante:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Aluno não encontrado"
+            detail="Aluno não encontrado",
         )
-    return student
+    return estudante
 
-@router.put("/students/{student_id}", response_model=Estudante)
-def update_student(student_id: str, student_data: EstudanteUpdate):
-    """Atualiza um aluno existente"""
-    student = student_service.update_student(student_id, student_data)
-    if not student:
+
+@router.put("/estudantes/{estudante_id}", response_model=Estudante)
+def atualizar_estudante(estudante_id: str, dados_estudante: AtualizarEstudante):
+    estudante = estudante_service.atualizar_estudante(estudante_id, dados_estudante)
+    if not estudante:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Aluno não encontrado"
+            detail="Aluno não encontrado",
         )
-    return student
+    return estudante
 
-@router.delete("/students/{student_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_student(student_id: str):
-    """Remove um aluno"""
-    if not student_service.delete_student(student_id):
+
+@router.delete("/estudantes/{estudante_id}", status_code=status.HTTP_204_NO_CONTENT)
+def remover_estudante(estudante_id: str):
+    if not estudante_service.remover_estudante(estudante_id):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Aluno não encontrado"
+            detail="Aluno não encontrado",
         )
     return None
 
-@router.get("/report")
-def get_report():
-    """Retorna relatório completo com todas as estatísticas"""
-    return student_service.get_report()
 
-@router.get("/report/class-average")
-def get_class_average():
-    """Retorna a média geral da turma"""
-    return {
-        "class_average": student_service.calculate_class_average()
-    }
+@router.get("/relatorios")
+def gerar_relatorio():
+    return estudante_service.gerar_relatorio()
 
-@router.get("/report/class-average-per-subject")
-def get_class_average_per_subject():
-    """Retorna a média da turma em cada disciplina"""
-    return {
-        "averages": student_service.calculate_class_average_per_subject()
-    }
 
-@router.get("/report/students-above-average")
-def get_students_above_average():
-    """Retorna alunos com média acima da média da turma"""
-    return {
-        "students": student_service.get_students_above_average()
-    }
+@router.get("/relatorios/media-turma")
+def obter_media_turma():
+    return {"media_turma": estudante_service.calcular_media_turma()}
 
-@router.get("/report/students-below-attendance")
-def get_students_below_attendance():
-    """Retorna alunos com frequência abaixo de 75%"""
+
+@router.get("/relatorios/medias-por-disciplina")
+def obter_medias_por_disciplina():
+    return {"medias_por_disciplina": estudante_service.calcular_media_turma_por_disciplina()}
+
+
+@router.get("/relatorios/estudantes-acima-da-media")
+def obter_estudantes_acima_da_media():
+    return {"estudantes": estudante_service.obter_estudantes_acima_da_media()}
+
+
+@router.get("/relatorios/estudantes-com-baixa-frequencia")
+def obter_estudantes_com_baixa_frequencia():
     return {
-        "students": student_service.get_students_below_attendance_threshold()
+        "estudantes": estudante_service.obter_estudantes_com_baixa_frequencia()
     }

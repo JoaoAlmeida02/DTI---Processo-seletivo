@@ -34,3 +34,19 @@ O objetivo é criar um sistema onde um professor possa registrar notas de alunos
 
 ## 📥 Exemplo de Entrada (resumo do PDF)
 
+---
+
+## ▶️ Executando o backend via terminal
+
+1. **Criar e ativar o ambiente virtual (opcional)**
+   cd backend
+   python -m venv .venv
+   .\.venv\Scripts\activate  # Windows
+   source .venv/bin/activate # Linux/Mac
+**Instalar as dependências**
+   pip install -r requirements.txt
+**Iniciar o servidor FastAPI**
+   uvicorn backend.main:app --reload
+**Testar as rotas**
+   - Docs: http://localhost:8000/docs
+   - Exemplos: `GET /api/estudantes`, `POST /api/estudantes`, `GET /api/relatorios/media-turma`
