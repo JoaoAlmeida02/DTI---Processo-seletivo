@@ -491,7 +491,7 @@ export default function App() {
                 cor="green"
               />
               <StatCard
-                titulo="Acima da Média"
+                titulo="Acima da Média da Turma"
                 valor={relatorio.estudantes_acima_da_media.length}
                 icone="⭐"
                 cor="yellow"

@@ -12,7 +12,6 @@ class EstudanteService:
         pass  # Não precisa mais do dicionário em memória
 
     def _nome_em_uso(self, nome: str, ignorar_id: Optional[str] = None) -> bool:
-        """Verifica se o nome já está em uso (case-insensitive)"""
         nome_normalizado = nome.strip().lower()
         
         with get_cursor() as cursor:
@@ -39,7 +38,6 @@ class EstudanteService:
             return result["count"] > 0
 
     def _buscar_notas_estudante(self, estudante_id: str) -> List[float]:
-        """Busca as notas de um estudante ordenadas por disciplina"""
         with get_cursor() as cursor:
             cursor.execute(
                 """
@@ -54,7 +52,6 @@ class EstudanteService:
             return [float(row["nota"]) for row in resultados]
 
     def _criar_notas_estudante(self, estudante_id: str, notas: List[float]) -> None:
-        """Insere as notas de um estudante no banco"""
         with get_cursor() as cursor:
             for disciplina, nota in enumerate(notas, start=1):
                 cursor.execute(
@@ -68,8 +65,6 @@ class EstudanteService:
                 )
 
     def _atualizar_notas_estudante(self, estudante_id: str, notas: List[float]) -> None:
-        """Atualiza as notas de um estudante"""
-        # Remove notas antigas e cria novas
         with get_cursor() as cursor:
             cursor.execute(
                 "DELETE FROM notas WHERE estudante_id = %s",
@@ -78,7 +73,6 @@ class EstudanteService:
         self._criar_notas_estudante(estudante_id, notas)
 
     def _row_para_estudante(self, row: Dict) -> Estudante:
-        """Converte uma linha do banco em objeto Estudante"""
         estudante_id = str(row["id"])
         notas = self._buscar_notas_estudante(estudante_id)
         
@@ -90,7 +84,6 @@ class EstudanteService:
         )
 
     def criar_estudante(self, dados_estudante: CriarEstudante) -> Estudante:
-        """Cria um novo estudante no banco de dados"""
         if self._nome_em_uso(dados_estudante.nome):
             raise ValueError("Já existe um estudante com esse nome.")
 
@@ -105,14 +98,11 @@ class EstudanteService:
                 (estudante_id, dados_estudante.nome, dados_estudante.frequencia)
             )
         
-        # Criar notas
         self._criar_notas_estudante(estudante_id, dados_estudante.notas)
         
-        # Retornar estudante criado
         return self.obter_estudante_por_id(estudante_id)
 
     def listar_estudantes(self) -> List[Estudante]:
-        """Lista todos os estudantes do banco"""
         with get_cursor() as cursor:
             cursor.execute("SELECT id, nome, frequencia FROM estudantes ORDER BY nome")
             rows = cursor.fetchall()
@@ -124,7 +114,6 @@ class EstudanteService:
             return estudantes
 
     def obter_estudante_por_id(self, estudante_id: str) -> Optional[Estudante]:
-        """Obtém um estudante pelo ID"""
         with get_cursor() as cursor:
             cursor.execute(
                 "SELECT id, nome, frequencia FROM estudantes WHERE id = %s",
@@ -140,17 +129,13 @@ class EstudanteService:
     def atualizar_estudante(
         self, estudante_id: str, dados_estudante: AtualizarEstudante
     ) -> Optional[Estudante]:
-        """Atualiza um estudante existente"""
-        # Verificar se existe
         estudante_existente = self.obter_estudante_por_id(estudante_id)
         if not estudante_existente:
             return None
 
-        # Verificar nome duplicado
         if self._nome_em_uso(dados_estudante.nome, ignorar_id=estudante_id):
             raise ValueError("Já existe um estudante com esse nome.")
 
-        # Atualizar dados do estudante
         with get_cursor() as cursor:
             cursor.execute(
                 """
@@ -167,7 +152,6 @@ class EstudanteService:
         return self.obter_estudante_por_id(estudante_id)
 
     def remover_estudante(self, estudante_id: str) -> bool:
-        """Remove um estudante do banco (CASCADE remove as notas automaticamente)"""
         with get_cursor() as cursor:
             cursor.execute("SELECT id FROM estudantes WHERE id = %s", (estudante_id,))
             if not cursor.fetchone():
@@ -177,13 +161,11 @@ class EstudanteService:
             return True
 
     def calcular_media_estudante(self, estudante: Estudante) -> float:
-        """Calcula a média de um estudante"""
         if not estudante.notas or len(estudante.notas) == 0:
             return 0.0
         return sum(estudante.notas) / len(estudante.notas)
 
     def calcular_media_turma_por_disciplina(self) -> List[Dict[str, float]]:
-        """Calcula a média da turma por disciplina"""
         with get_cursor() as cursor:
             cursor.execute(
                 """
@@ -197,7 +179,6 @@ class EstudanteService:
             )
             resultados = cursor.fetchall()
             
-            # Criar dicionário com médias por disciplina
             medias_dict = {}
             for row in resultados:
                 disciplina = int(row["disciplina"])
@@ -215,7 +196,6 @@ class EstudanteService:
             return medias_por_disciplina
 
     def calcular_media_turma(self) -> float:
-        """Calcula a média geral da turma"""
         estudantes = self.listar_estudantes()
         
         if not estudantes:
@@ -227,7 +207,6 @@ class EstudanteService:
         return round(soma_medias / len(estudantes), 2)
 
     def obter_estudantes_acima_da_media(self) -> List[Dict[str, Any]]:
-        """Obtém estudantes com média acima da média da turma"""
         media_turma = self.calcular_media_turma()
         estudantes = self.listar_estudantes()
         
@@ -246,7 +225,6 @@ class EstudanteService:
     def obter_estudantes_com_baixa_frequencia(
         self, limite: float = 75.0
     ) -> List[Dict[str, Any]]:
-        """Obtém estudantes com frequência abaixo do limite"""
         with get_cursor() as cursor:
             cursor.execute(
                 """
@@ -269,7 +247,6 @@ class EstudanteService:
             ]
 
     def gerar_relatorio(self) -> Dict[str, Any]:
-        """Gera relatório completo com todas as estatísticas"""
         estudantes = self.listar_estudantes()
         
         estudantes_com_medias = [
