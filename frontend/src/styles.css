@@ -49,11 +49,17 @@
     gap: 6px;
   }
   
-  input {
+  input,
+  textarea {
     padding: 10px;
     border-radius: 8px;
     border: 1px solid #d1d5db;
     font-size: 1rem;
+  }
+
+  textarea {
+    resize: vertical;
+    min-height: 120px;
   }
   
   .grade-grid {
@@ -80,6 +86,31 @@
   
   button.danger {
     background: #dc2626;
+  }
+
+  button.secondary {
+    background: #6b7280;
+  }
+
+  button:hover:not(:disabled) {
+    opacity: 0.9;
+  }
+
+  .form-actions {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+  }
+
+  .table-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .table-actions button {
+    padding: 8px 12px;
+    font-size: 0.9rem;
   }
   
   table {
