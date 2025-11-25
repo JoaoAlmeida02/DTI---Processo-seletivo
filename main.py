@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from controller.estudanteController import router as estudante_router
+from backend.controller.estudanteController import router as estudante_router
 
 app = FastAPI(
     title="Sistema de Gestão Escolar API",

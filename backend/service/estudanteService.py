@@ -1,13 +1,27 @@
 from typing import Any, Dict, List, Optional
 
-from model.estudante import AtualizarEstudante, CriarEstudante, Estudante
+from backend.model.estudante import AtualizarEstudante, CriarEstudante, Estudante
+
+TOTAL_DISCIPLINAS = 5
 
 
 class EstudanteService:
     def __init__(self):
         self.estudantes: Dict[str, Estudante] = {}
 
+    def _nome_em_uso(self, nome: str, ignorar_id: Optional[str] = None) -> bool:
+        nome_normalizado = nome.strip().lower()
+        for estudante in self.estudantes.values():
+            if ignorar_id and estudante.id == ignorar_id:
+                continue
+            if estudante.nome.strip().lower() == nome_normalizado:
+                return True
+        return False
+
     def criar_estudante(self, dados_estudante: CriarEstudante) -> Estudante:
+        if self._nome_em_uso(dados_estudante.nome):
+            raise ValueError("Já existe um estudante com esse nome.")
+
         novo_estudante = Estudante(**dados_estudante.dict())
         self.estudantes[novo_estudante.id] = novo_estudante
         return novo_estudante
@@ -24,6 +38,9 @@ class EstudanteService:
         if estudante_id not in self.estudantes:
             return None
 
+        if self._nome_em_uso(dados_estudante.nome, ignorar_id=estudante_id):
+            raise ValueError("Já existe um estudante com esse nome.")
+
         estudante_atualizado = Estudante(id=estudante_id, **dados_estudante.dict())
         self.estudantes[estudante_id] = estudante_atualizado
         return estudante_atualizado
@@ -37,19 +54,27 @@ class EstudanteService:
     def calcular_media_estudante(self, estudante: Estudante) -> float:
         return sum(estudante.notas) / len(estudante.notas)
 
-    def calcular_media_turma_por_disciplina(self) -> List[float]:
+    def calcular_media_turma_por_disciplina(self) -> List[Dict[str, float]]:
         if not self.estudantes:
-            return [0.0] * 5
+            return [
+                {"disciplina": f"Disciplina {indice + 1}", "media": 0.0}
+                for indice in range(TOTAL_DISCIPLINAS)
+            ]
 
         estudantes = list(self.estudantes.values())
-        medias_por_disciplina: List[float] = []
+        medias_por_disciplina: List[Dict[str, float]] = []
 
-        for indice_disciplina in range(5):
+        for indice_disciplina in range(TOTAL_DISCIPLINAS):
             soma_disciplina = sum(
                 estudante.notas[indice_disciplina] for estudante in estudantes
             )
             media_disciplina = soma_disciplina / len(estudantes)
-            medias_por_disciplina.append(round(media_disciplina, 2))
+            medias_por_disciplina.append(
+                {
+                    "disciplina": f"Disciplina {indice_disciplina + 1}",
+                    "media": round(media_disciplina, 2),
+                }
+            )
 
         return medias_por_disciplina
 

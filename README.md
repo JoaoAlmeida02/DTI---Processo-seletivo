@@ -10,7 +10,7 @@ O objetivo é criar um sistema onde um professor possa registrar notas de alunos
 ## 🚀 Tecnologias Utilizadas
 
 ### **Frontend**
-- React
+- React + Vite (JavaScript)
 ### **Backend**
 - Python
 ---
@@ -36,17 +36,29 @@ O objetivo é criar um sistema onde um professor possa registrar notas de alunos
 
 ---
 
-## ▶️ Executando o backend via terminal
+## ▶️ Executando o backend (100% local, sem banco)
+
+Toda a persistência é feita em memória usando um dicionário dentro de `backend/service/estudanteService.py`. Ao reiniciar o servidor, os dados são resetados, facilitando os testes locais.
 
 1. **Criar e ativar o ambiente virtual (opcional)**
-   cd backend
    python -m venv .venv
-   .\.venv\Scripts\activate  # Windows
+   .\.venv\Scripts\activate  # Windows (PowerShell pode exigir execução permitida)
    source .venv/bin/activate # Linux/Mac
-**Instalar as dependências**
-   pip install -r requirements.txt
-**Iniciar o servidor FastAPI**
-   uvicorn backend.main:app --reload
-**Testar as rotas**
-   - Docs: http://localhost:8000/docs
-   - Exemplos: `GET /api/estudantes`, `POST /api/estudantes`, `GET /api/relatorios/media-turma`
+2. **Instalar as dependências**
+   python -m pip install -r requirements.txt
+3. **Iniciar o servidor FastAPI (raiz do projeto)**
+   uvicorn main:app --reload
+4. **Testar as rotas**
+   - Docs: http://127.0.0.1:8000/docs
+   - Exemplos: `GET /api/estudantes`, `POST /api/estudantes`, `GET /api/relatorios`
+
+## 🖥️ Frontend React (Vite)
+
+O diretório `frontend/` contém um app React minimalista que consome a API. Para rodar:
+
+1. Instale as dependências:
+   cd frontend
+   npm install
+2. Execute o modo desenvolvimento:
+   npm run dev
+3. Abra http://127.0.0.1:5173 e utilize a interface (o backend precisa estar ativo em http://127.0.0.1:8000).

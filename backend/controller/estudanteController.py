@@ -1,15 +1,21 @@
 from fastapi import APIRouter, HTTPException, status
 from typing import List
 
-from model.estudante import AtualizarEstudante, CriarEstudante, Estudante
-from service.estudanteService import estudante_service
+from backend.model.estudante import AtualizarEstudante, CriarEstudante, Estudante
+from backend.service.estudanteService import estudante_service
 
 router = APIRouter()
 
 
 @router.post("/estudantes", response_model=Estudante, status_code=status.HTTP_201_CREATED)
 def criar_estudante(estudante: CriarEstudante):
-    return estudante_service.criar_estudante(estudante)
+    try:
+        return estudante_service.criar_estudante(estudante)
+    except ValueError as erro:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=str(erro),
+        ) from erro
 
 
 @router.get("/estudantes", response_model=List[Estudante])
@@ -30,7 +36,13 @@ def obter_estudante(estudante_id: str):
 
 @router.put("/estudantes/{estudante_id}", response_model=Estudante)
 def atualizar_estudante(estudante_id: str, dados_estudante: AtualizarEstudante):
-    estudante = estudante_service.atualizar_estudante(estudante_id, dados_estudante)
+    try:
+        estudante = estudante_service.atualizar_estudante(estudante_id, dados_estudante)
+    except ValueError as erro:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=str(erro),
+        ) from erro
     if not estudante:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
