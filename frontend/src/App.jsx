@@ -28,7 +28,40 @@ function Media({ notas }) {
     return (total / notas.length).toFixed(2);
   }, [notas]);
 
-  return <span>{media}</span>;
+  const mediaNum = parseFloat(media);
+  const classeMedia =
+    mediaNum >= 7 ? "media-alta" : mediaNum >= 5 ? "media-media" : "media-baixa";
+
+  return (
+    <span className={`media-badge ${classeMedia}`}>
+      <span className="media-value">{media}</span>
+    </span>
+  );
+}
+
+function FrequenciaBadge({ frequencia }) {
+  const classeFreq =
+    frequencia >= 75 ? "freq-alta" : frequencia >= 50 ? "freq-media" : "freq-baixa";
+  const icone = frequencia >= 75 ? "✓" : frequencia >= 50 ? "⚠" : "✗";
+
+  return (
+    <span className={`freq-badge ${classeFreq}`}>
+      <span className="freq-icon">{icone}</span>
+      <span className="freq-value">{frequencia}%</span>
+    </span>
+  );
+}
+
+function StatCard({ titulo, valor, icone, cor }) {
+  return (
+    <div className={`stat-card stat-${cor}`}>
+      <div className="stat-icon">{icone}</div>
+      <div className="stat-content">
+        <div className="stat-titulo">{titulo}</div>
+        <div className="stat-valor">{valor}</div>
+      </div>
+    </div>
+  );
 }
 
 export default function App() {
@@ -207,87 +240,170 @@ export default function App() {
     );
   }
 
+  const estudanteEditando = editandoId
+    ? estudantes.find((e) => e.id === editandoId)
+    : null;
+
   return (
     <div className="app-container">
-      <header>
-        <h1>Sistema de Gestão Escolar</h1>
+      <header className="main-header">
+        <div className="header-content">
+          <div className="header-title">
+            <h1>
+              <span className="header-icon"></span>
+              Sistema de Gestão Escolar
+            </h1>
+            <p className="header-subtitle">
+              Gerencie notas, frequência e relatórios dos seus estudantes
+            </p>
+          </div>
+        </div>
       </header>
 
-      <section>
-        <h2>{editandoId ? "Editar estudante" : "Novo estudante"}</h2>
+      <section className="form-section">
+        <div className="section-header">
+          <h2>
+            {editandoId ? (
+              <>
+                <span className="section-icon">✏️</span>
+                Editar estudante
+              </>
+            ) : (
+              <>
+                <span className="section-icon">➕</span>
+                Novo estudante
+              </>
+            )}
+          </h2>
+          {editandoId && estudanteEditando && (
+            <div className="edit-indicator">
+              Editando: <strong>{estudanteEditando.nome}</strong>
+            </div>
+          )}
+        </div>
         <form onSubmit={handleSubmit}>
-          <label>
-            Nome
-            <input
-              name="nome"
-              value={formData.nome}
-              onChange={handleInputChange}
-              required
-            />
-          </label>
+          <div className="form-row">
+            <label className="form-label-large">
+              <span className="label-text">
+                <span className="label-icon">👤</span>
+                Nome do Estudante
+              </span>
+              <input
+                name="nome"
+                value={formData.nome}
+                onChange={handleInputChange}
+                placeholder="Digite o nome completo"
+                required
+              />
+            </label>
 
-          <label>
-            Frequência (%)
-            <input
-              type="number"
-              name="frequencia"
-              min="0"
-              max="100"
-              step="0.1"
-              value={formData.frequencia}
-              onChange={handleInputChange}
-              required
-            />
-          </label>
+            <label className="form-label-large">
+              <span className="label-text">
+                <span className="label-icon">📊</span>
+                Frequência (%)
+              </span>
+              <input
+                type="number"
+                name="frequencia"
+                min="0"
+                max="100"
+                step="0.1"
+                value={formData.frequencia}
+                onChange={handleInputChange}
+                placeholder="0.0 - 100.0"
+                required
+              />
+            </label>
+          </div>
 
-          <div className="grade-grid">
-            {formData.notas.map((valor, index) => (
-              <label key={index}>
-                Nota {index + 1}
-                <input
-                  type="number"
-                  min="0"
-                  max="10"
-                  step="0.1"
-                  value={valor}
-                  onChange={(event) => handleInputChange(event, index)}
-                  required
-                />
-              </label>
-            ))}
+          <div className="notas-section">
+            <div className="notas-header">
+              <span className="notas-icon">📝</span>
+              <span className="notas-title">Notas das Disciplinas</span>
+            </div>
+            <div className="grade-grid">
+              {formData.notas.map((valor, index) => (
+                <label key={index} className="nota-label">
+                  <span className="nota-number">Disciplina {index + 1}</span>
+                  <input
+                    type="number"
+                    min="0"
+                    max="10"
+                    step="0.1"
+                    value={valor}
+                    onChange={(event) => handleInputChange(event, index)}
+                    placeholder="0.0 - 10.0"
+                    required
+                    className="nota-input"
+                  />
+                </label>
+              ))}
+            </div>
           </div>
 
           <div className="form-actions">
-            <button type="submit" disabled={loading}>
-              {loading
-                ? editandoId
-                  ? "Atualizando..."
-                  : "Salvando..."
-                : editandoId
-                  ? "Salvar alterações"
-                  : "Salvar estudante"}
+            <button type="submit" disabled={loading} className="btn-primary">
+              {loading ? (
+                <>
+                  <span className="btn-spinner">⏳</span>
+                  {editandoId ? "Atualizando..." : "Salvando..."}
+                </>
+              ) : (
+                <>
+                  <span className="btn-icon">
+                    {editandoId ? "💾" : "✅"}
+                  </span>
+                  {editandoId ? "Salvar alterações" : "Salvar estudante"}
+                </>
+              )}
             </button>
             {editandoId && (
               <button
                 type="button"
                 onClick={cancelarEdicao}
                 disabled={loading}
-                className="secondary"
+                className="btn-secondary"
               >
+                <span className="btn-icon">❌</span>
                 Cancelar
               </button>
             )}
           </div>
           {status && (
-            <span className={`status${status.includes("erro") ? " error" : ""}`}>
-              {status}
-            </span>
+            <div
+              className={`status-message ${
+                status.includes("erro") || status.includes("Erro")
+                  ? "error"
+                  : status.includes("sucesso") || status.includes("Sucesso")
+                  ? "success"
+                  : "info"
+              }`}
+            >
+              <span className="status-icon">
+                {status.includes("erro") || status.includes("Erro")
+                  ? "❌"
+                  : status.includes("sucesso") || status.includes("Sucesso")
+                  ? "✅"
+                  : "ℹ️"}
+              </span>
+              <span>{status}</span>
+            </div>
           )}
         </form>
       </section>
 
-      <section>
-        <h2>Estudantes cadastrados</h2>
+      <section className="students-section">
+        <div className="section-header">
+          <h2>
+            <span className="section-icon">👥</span>
+            Estudantes Cadastrados
+          </h2>
+          {estudantes.length > 0 && (
+            <div className="students-count">
+              {estudantes.length} {estudantes.length === 1 ? "estudante" : "estudantes"}
+            </div>
+          )}
+        </div>
         <table>
           <thead>
             <tr>
@@ -300,31 +416,48 @@ export default function App() {
           <tbody>
             {estudantes.length === 0 && (
               <tr>
-                <td colSpan={4}>Nenhum estudante cadastrado.</td>
+                <td colSpan={4} className="empty-state">
+                  <div className="empty-content">
+                    <span className="empty-icon">📋</span>
+                    <p>Nenhum estudante cadastrado ainda.</p>
+                    <p className="empty-hint">
+                      Use o formulário acima para adicionar o primeiro estudante.
+                    </p>
+                  </div>
+                </td>
               </tr>
             )}
             {estudantes.map((estudante) => (
-              <tr key={estudante.id}>
-                <td>{estudante.nome}</td>
+              <tr key={estudante.id} className="student-row">
+                <td className="student-name">
+                  <strong>{estudante.nome}</strong>
+                </td>
                 <td>
                   <Media notas={estudante.notas} />
                 </td>
-                <td>{estudante.frequencia}%</td>
+                <td>
+                  <FrequenciaBadge frequencia={estudante.frequencia} />
+                </td>
                 <td>
                   <div className="table-actions">
                     <button
                       type="button"
+                      className="btn-edit"
                       onClick={() => iniciarEdicao(estudante)}
-                      disabled={editandoId === estudante.id}
+                      disabled={editandoId === estudante.id || !!editandoId}
+                      title="Editar estudante"
                     >
+                      <span className="btn-icon">✏️</span>
                       Editar
                     </button>
                     <button
                       type="button"
-                      className="danger"
+                      className="btn-danger"
                       onClick={() => removerEstudante(estudante.id)}
                       disabled={!!editandoId}
+                      title="Remover estudante"
                     >
+                      <span className="btn-icon">🗑️</span>
                       Remover
                     </button>
                   </div>
@@ -335,45 +468,77 @@ export default function App() {
         </table>
       </section>
 
-      <section>
-        <h2>Relatórios</h2>
+      <section className="reports-section">
+        <div className="section-header">
+          <h2>
+            <span className="section-icon">📊</span>
+            Relatórios e Estatísticas
+          </h2>
+        </div>
         {relatorio ? (
           <>
-            <ul className="relatorio-list">
-              <li>Total de estudantes: {relatorio.total_estudantes}</li>
-              <li>Média da turma: {relatorio.media_turma}</li>
-              <li>
-                Estudantes acima da média:{" "}
-                {relatorio.estudantes_acima_da_media.length}
-              </li>
-              <li>
-                Frequência &lt; 75%: {relatorio.estudantes_com_baixa_frequencia.length}
-              </li>
-            </ul>
+            <div className="stats-grid">
+              <StatCard
+                titulo="Total de Estudantes"
+                valor={relatorio.total_estudantes}
+                icone="👥"
+                cor="blue"
+              />
+              <StatCard
+                titulo="Média da Turma"
+                valor={relatorio.media_turma.toFixed(2)}
+                icone="📈"
+                cor="green"
+              />
+              <StatCard
+                titulo="Acima da Média"
+                valor={relatorio.estudantes_acima_da_media.length}
+                icone="⭐"
+                cor="yellow"
+              />
+              <StatCard
+                titulo="Frequência &lt; 75%"
+                valor={relatorio.estudantes_com_baixa_frequencia.length}
+                icone="⚠️"
+                cor="red"
+              />
+            </div>
             {mediasPorDisciplina.length > 0 && (
               <div className="medias-disciplinas">
-                <h3>Médias por Disciplina</h3>
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Disciplina</th>
-                      <th>Média</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {mediasPorDisciplina.map((item, index) => (
-                      <tr key={index}>
-                        <td>{item.disciplina}</td>
-                        <td>{item.media.toFixed(2)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                <div className="disciplinas-header">
+                  <h3>
+                    <span className="section-icon">📚</span>
+                    Médias por Disciplina
+                  </h3>
+                  <p className="disciplinas-subtitle">
+                    Média geral de cada disciplina da turma
+                  </p>
+                </div>
+                <div className="disciplinas-grid">
+                  {mediasPorDisciplina.map((item, index) => {
+                    const mediaNum = parseFloat(item.media);
+                    const classeMedia =
+                      mediaNum >= 7
+                        ? "disciplina-alta"
+                        : mediaNum >= 5
+                        ? "disciplina-media-class"
+                        : "disciplina-baixa";
+                    return (
+                      <div key={index} className={`disciplina-card ${classeMedia}`}>
+                        <div className="disciplina-nome">{item.disciplina}</div>
+                        <div className="disciplina-media">{item.media.toFixed(2)}</div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             )}
           </>
         ) : (
-          <p>Carregando relatórios...</p>
+          <div className="loading-state">
+            <span className="loading-spinner">⏳</span>
+            <p>Carregando relatórios...</p>
+          </div>
         )}
       </section>
     </div>

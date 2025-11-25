@@ -1,4 +1,4 @@
-# 📚 Sistema de Gestão de Notas e Frequência  
+# Sistema de Gestão de Notas e Frequência  
 ### Teste Técnico — Desenvolvedor Full Stack  
 **Autor:** João Gabriel Santos Andrade Almeida
 
@@ -7,7 +7,7 @@ O objetivo é criar um sistema onde um professor possa registrar notas de alunos
 
 ---
 
-## 🚀 Tecnologias Utilizadas
+## Tecnologias Utilizadas
 
 ### **Frontend**
 - React + Vite (JavaScript)
@@ -15,7 +15,7 @@ O objetivo é criar um sistema onde um professor possa registrar notas de alunos
 - Python
 ---
 
-## 🧠 Funcionalidades
+## Funcionalidades
 
 ✔ Inserção das notas (0 a 10) das **cinco disciplinas** de cada aluno  
 ✔ Registro da **frequência (%)**  
@@ -35,7 +35,7 @@ O objetivo é criar um sistema onde um professor possa registrar notas de alunos
 
 ---
 
-## 📋 Lista de Premissas Assumidas
+## Lista de Premissas Assumidas
 
 1. **Persistência em memória**: O sistema utiliza armazenamento em memória (dicionário Python) para facilitar testes locais. Os dados são perdidos ao reiniciar o servidor.
 
@@ -53,7 +53,7 @@ O objetivo é criar um sistema onde um professor possa registrar notas de alunos
 
 ---
 
-## 🎯 Decisões de Projeto
+## Decisões de Projeto
 
 ### **Arquitetura**
 
@@ -98,7 +98,7 @@ O objetivo é criar um sistema onde um professor possa registrar notas de alunos
 
 ---
 
-## 💡 O que mais você achar importante compartilhar sobre o projeto
+## O que mais você achar importante compartilhar sobre o projeto
 
 ### **Funcionalidades Extras Implementadas**
 
@@ -161,11 +161,11 @@ VITE_EMAILJS_PUBLIC_KEY=jQz2IxB_AR4IpQnwB
 
 ---
 
-## 📥 Exemplo de Entrada (resumo do PDF)
+## Exemplo de Entrada (resumo do PDF)
 
 ---
 
-## ▶️ Executando o backend (100% local, sem banco)
+## ▶Executando o backend (100% local, sem banco)
 
 Toda a persistência é feita em memória usando um dicionário dentro de `backend/service/estudanteService.py`. Ao reiniciar o servidor, os dados são resetados, facilitando os testes locais.
 
@@ -181,7 +181,7 @@ Toda a persistência é feita em memória usando um dicionário dentro de `backe
    - Docs: http://127.0.0.1:8000/docs
    - Exemplos: `GET /api/estudantes`, `POST /api/estudantes`, `GET /api/relatorios`
 
-## 🖥️ Frontend React (Vite)
+## Frontend React (Vite)
 
 O diretório `frontend/` contém um app React minimalista que consome a API. Para rodar:
 
@@ -192,7 +192,7 @@ O diretório `frontend/` contém um app React minimalista que consome a API. Par
    npm run dev
 3. Abra http://127.0.0.1:5173 e utilize a interface (o backend precisa estar ativo em http://127.0.0.1:8000).
 
-## ✉️ Configurando o EmailJS para o formulário de contato
+## Configurando o EmailJS para o formulário de contato
 
 1. Crie sua conta em [emailjs.com](https://www.emailjs.com/), adicione um **Email Service** e crie **dois templates**:
    - `FOR_ME`: envia os dados do formulário para o seu e-mail fixo.
