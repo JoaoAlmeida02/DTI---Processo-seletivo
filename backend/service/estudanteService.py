@@ -1,130 +1,277 @@
 from typing import Any, Dict, List, Optional
+from uuid import uuid4
 
 from backend.model.estudante import AtualizarEstudante, CriarEstudante, Estudante
+from backend.database.db import get_cursor
 
 TOTAL_DISCIPLINAS = 5
 
 
 class EstudanteService:
     def __init__(self):
-        self.estudantes: Dict[str, Estudante] = {}
+        pass  # Não precisa mais do dicionário em memória
 
     def _nome_em_uso(self, nome: str, ignorar_id: Optional[str] = None) -> bool:
+        """Verifica se o nome já está em uso (case-insensitive)"""
         nome_normalizado = nome.strip().lower()
-        for estudante in self.estudantes.values():
-            if ignorar_id and estudante.id == ignorar_id:
-                continue
-            if estudante.nome.strip().lower() == nome_normalizado:
-                return True
-        return False
+        
+        with get_cursor() as cursor:
+            if ignorar_id:
+                cursor.execute(
+                    """
+                    SELECT COUNT(*) as count
+                    FROM estudantes
+                    WHERE LOWER(TRIM(nome)) = %s AND id != %s
+                    """,
+                    (nome_normalizado, ignorar_id)
+                )
+            else:
+                cursor.execute(
+                    """
+                    SELECT COUNT(*) as count
+                    FROM estudantes
+                    WHERE LOWER(TRIM(nome)) = %s
+                    """,
+                    (nome_normalizado,)
+                )
+            
+            result = cursor.fetchone()
+            return result["count"] > 0
+
+    def _buscar_notas_estudante(self, estudante_id: str) -> List[float]:
+        """Busca as notas de um estudante ordenadas por disciplina"""
+        with get_cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT nota
+                FROM notas
+                WHERE estudante_id = %s
+                ORDER BY disciplina
+                """,
+                (estudante_id,)
+            )
+            resultados = cursor.fetchall()
+            return [float(row["nota"]) for row in resultados]
+
+    def _criar_notas_estudante(self, estudante_id: str, notas: List[float]) -> None:
+        """Insere as notas de um estudante no banco"""
+        with get_cursor() as cursor:
+            for disciplina, nota in enumerate(notas, start=1):
+                cursor.execute(
+                    """
+                    INSERT INTO notas (estudante_id, disciplina, nota)
+                    VALUES (%s, %s, %s)
+                    ON CONFLICT (estudante_id, disciplina)
+                    DO UPDATE SET nota = EXCLUDED.nota
+                    """,
+                    (estudante_id, disciplina, nota)
+                )
+
+    def _atualizar_notas_estudante(self, estudante_id: str, notas: List[float]) -> None:
+        """Atualiza as notas de um estudante"""
+        # Remove notas antigas e cria novas
+        with get_cursor() as cursor:
+            cursor.execute(
+                "DELETE FROM notas WHERE estudante_id = %s",
+                (estudante_id,)
+            )
+        self._criar_notas_estudante(estudante_id, notas)
+
+    def _row_para_estudante(self, row: Dict) -> Estudante:
+        """Converte uma linha do banco em objeto Estudante"""
+        estudante_id = str(row["id"])
+        notas = self._buscar_notas_estudante(estudante_id)
+        
+        return Estudante(
+            id=estudante_id,
+            nome=row["nome"],
+            notas=notas,
+            frequencia=float(row["frequencia"])
+        )
 
     def criar_estudante(self, dados_estudante: CriarEstudante) -> Estudante:
+        """Cria um novo estudante no banco de dados"""
         if self._nome_em_uso(dados_estudante.nome):
             raise ValueError("Já existe um estudante com esse nome.")
 
-        novo_estudante = Estudante(**dados_estudante.dict())
-        self.estudantes[novo_estudante.id] = novo_estudante
-        return novo_estudante
+        estudante_id = str(uuid4())
+        
+        with get_cursor() as cursor:
+            cursor.execute(
+                """
+                INSERT INTO estudantes (id, nome, frequencia)
+                VALUES (%s, %s, %s)
+                """,
+                (estudante_id, dados_estudante.nome, dados_estudante.frequencia)
+            )
+        
+        # Criar notas
+        self._criar_notas_estudante(estudante_id, dados_estudante.notas)
+        
+        # Retornar estudante criado
+        return self.obter_estudante_por_id(estudante_id)
 
     def listar_estudantes(self) -> List[Estudante]:
-        return list(self.estudantes.values())
+        """Lista todos os estudantes do banco"""
+        with get_cursor() as cursor:
+            cursor.execute("SELECT id, nome, frequencia FROM estudantes ORDER BY nome")
+            rows = cursor.fetchall()
+            
+            estudantes = []
+            for row in rows:
+                estudantes.append(self._row_para_estudante(row))
+            
+            return estudantes
 
     def obter_estudante_por_id(self, estudante_id: str) -> Optional[Estudante]:
-        return self.estudantes.get(estudante_id)
+        """Obtém um estudante pelo ID"""
+        with get_cursor() as cursor:
+            cursor.execute(
+                "SELECT id, nome, frequencia FROM estudantes WHERE id = %s",
+                (estudante_id,)
+            )
+            row = cursor.fetchone()
+            
+            if not row:
+                return None
+            
+            return self._row_para_estudante(row)
 
     def atualizar_estudante(
         self, estudante_id: str, dados_estudante: AtualizarEstudante
     ) -> Optional[Estudante]:
-        if estudante_id not in self.estudantes:
+        """Atualiza um estudante existente"""
+        # Verificar se existe
+        estudante_existente = self.obter_estudante_por_id(estudante_id)
+        if not estudante_existente:
             return None
 
+        # Verificar nome duplicado
         if self._nome_em_uso(dados_estudante.nome, ignorar_id=estudante_id):
             raise ValueError("Já existe um estudante com esse nome.")
 
-        estudante_atualizado = Estudante(id=estudante_id, **dados_estudante.dict())
-        self.estudantes[estudante_id] = estudante_atualizado
-        return estudante_atualizado
+        # Atualizar dados do estudante
+        with get_cursor() as cursor:
+            cursor.execute(
+                """
+                UPDATE estudantes
+                SET nome = %s, frequencia = %s
+                WHERE id = %s
+                """,
+                (dados_estudante.nome, dados_estudante.frequencia, estudante_id)
+            )
+        
+        # Atualizar notas
+        self._atualizar_notas_estudante(estudante_id, dados_estudante.notas)
+        
+        return self.obter_estudante_por_id(estudante_id)
 
     def remover_estudante(self, estudante_id: str) -> bool:
-        if estudante_id in self.estudantes:
-            del self.estudantes[estudante_id]
+        """Remove um estudante do banco (CASCADE remove as notas automaticamente)"""
+        with get_cursor() as cursor:
+            cursor.execute("SELECT id FROM estudantes WHERE id = %s", (estudante_id,))
+            if not cursor.fetchone():
+                return False
+            
+            cursor.execute("DELETE FROM estudantes WHERE id = %s", (estudante_id,))
             return True
-        return False
 
     def calcular_media_estudante(self, estudante: Estudante) -> float:
+        """Calcula a média de um estudante"""
+        if not estudante.notas or len(estudante.notas) == 0:
+            return 0.0
         return sum(estudante.notas) / len(estudante.notas)
 
     def calcular_media_turma_por_disciplina(self) -> List[Dict[str, float]]:
-        if not self.estudantes:
-            return [
-                {"disciplina": f"Disciplina {indice + 1}", "media": 0.0}
-                for indice in range(TOTAL_DISCIPLINAS)
-            ]
-
-        estudantes = list(self.estudantes.values())
-        medias_por_disciplina: List[Dict[str, float]] = []
-
-        for indice_disciplina in range(TOTAL_DISCIPLINAS):
-            soma_disciplina = sum(
-                estudante.notas[indice_disciplina] for estudante in estudantes
+        """Calcula a média da turma por disciplina"""
+        with get_cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT 
+                    disciplina,
+                    AVG(nota) as media
+                FROM notas
+                GROUP BY disciplina
+                ORDER BY disciplina
+                """
             )
-            media_disciplina = soma_disciplina / len(estudantes)
-            medias_por_disciplina.append(
-                {
-                    "disciplina": f"Disciplina {indice_disciplina + 1}",
-                    "media": round(media_disciplina, 2),
-                }
-            )
-
-        return medias_por_disciplina
+            resultados = cursor.fetchall()
+            
+            # Criar dicionário com médias por disciplina
+            medias_dict = {}
+            for row in resultados:
+                disciplina = int(row["disciplina"])
+                media = float(row["media"])
+                medias_dict[disciplina] = round(media, 2)
+            
+            # Retornar em ordem (1 a 5), preenchendo com 0.0 se não houver notas
+            medias_por_disciplina = []
+            for i in range(1, TOTAL_DISCIPLINAS + 1):
+                medias_por_disciplina.append({
+                    "disciplina": f"Disciplina {i}",
+                    "media": medias_dict.get(i, 0.0)
+                })
+            
+            return medias_por_disciplina
 
     def calcular_media_turma(self) -> float:
-        if not self.estudantes:
+        """Calcula a média geral da turma"""
+        estudantes = self.listar_estudantes()
+        
+        if not estudantes:
             return 0.0
-
+        
         soma_medias = sum(
-            self.calcular_media_estudante(estudante)
-            for estudante in self.estudantes.values()
+            self.calcular_media_estudante(estudante) for estudante in estudantes
         )
-        return round(soma_medias / len(self.estudantes), 2)
+        return round(soma_medias / len(estudantes), 2)
 
     def obter_estudantes_acima_da_media(self) -> List[Dict[str, Any]]:
+        """Obtém estudantes com média acima da média da turma"""
         media_turma = self.calcular_media_turma()
-
+        estudantes = self.listar_estudantes()
+        
         estudantes_acima = []
-        for estudante in self.estudantes.values():
+        for estudante in estudantes:
             media_estudante = self.calcular_media_estudante(estudante)
             if media_estudante > media_turma:
-                estudantes_acima.append(
-                    {
-                        "id": estudante.id,
-                        "nome": estudante.nome,
-                        "media": round(media_estudante, 2),
-                    }
-                )
-
+                estudantes_acima.append({
+                    "id": estudante.id,
+                    "nome": estudante.nome,
+                    "media": round(media_estudante, 2),
+                })
+        
         return estudantes_acima
 
     def obter_estudantes_com_baixa_frequencia(
         self, limite: float = 75.0
     ) -> List[Dict[str, Any]]:
-        estudantes_com_baixa_frequencia = []
-
-        for estudante in self.estudantes.values():
-            if estudante.frequencia < limite:
-                estudantes_com_baixa_frequencia.append(
-                    {
-                        "id": estudante.id,
-                        "nome": estudante.nome,
-                        "frequencia": estudante.frequencia,
-                    }
-                )
-
-        return estudantes_com_baixa_frequencia
+        """Obtém estudantes com frequência abaixo do limite"""
+        with get_cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT id, nome, frequencia
+                FROM estudantes
+                WHERE frequencia < %s
+                ORDER BY frequencia ASC
+                """,
+                (limite,)
+            )
+            resultados = cursor.fetchall()
+            
+            return [
+                {
+                    "id": str(row["id"]),
+                    "nome": row["nome"],
+                    "frequencia": float(row["frequencia"]),
+                }
+                for row in resultados
+            ]
 
     def gerar_relatorio(self) -> Dict[str, Any]:
+        """Gera relatório completo com todas as estatísticas"""
         estudantes = self.listar_estudantes()
-
+        
         estudantes_com_medias = [
             {
                 "id": estudante.id,
@@ -135,7 +282,7 @@ class EstudanteService:
             }
             for estudante in estudantes
         ]
-
+        
         return {
             "total_estudantes": len(estudantes),
             "estudantes": estudantes_com_medias,
