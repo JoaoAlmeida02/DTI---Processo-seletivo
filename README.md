@@ -194,7 +194,7 @@ O diretório `frontend/` contém um app React minimalista que consome a API. Par
 3. Copie `Service ID`, `Template ID For Me`, `Template ID For Sender` e `Public Key`.
 4. Tanto o formulário “Contato” quanto o alerta automático de frequência usam esse único template para disparar os e-mails via `@emailjs/browser`.
 
-#Segue exemplo de email:
+# Segue exemplo de email:
 
 
 https://github.com/user-attachments/assets/7fc9959d-478e-4adb-aaeb-d242af3628f3
