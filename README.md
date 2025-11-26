@@ -37,7 +37,7 @@ O objetivo é criar um sistema onde um professor possa registrar notas de alunos
 
 ## Lista de Premissas Assumidas
 
-1. **Persistência em memória**: O sistema utiliza armazenamento em memória (dicionário Python) para facilitar testes locais. Os dados são perdidos ao reiniciar o servidor.
+1. **Persistência em memória**: O sistema utiliza Banco de dados Postgres, portanto os dados não são perdidos ao resetar
 
 2. **Cinco disciplinas fixas**: Cada estudante possui exatamente 5 notas, representando 5 disciplinas diferentes.
 
@@ -147,27 +147,20 @@ DTI---Processo-seletivo/
 Para o EmailJS funcionar, crie `frontend/.env.local`:
 
 ```
-VITE_EMAILJS_SERVICE_ID=service_wxn0nrb
-VITE_EMAILJS_TEMPLATE_ID=template_g1mqxdn
-VITE_EMAILJS_PUBLIC_KEY=jQz2IxB_AR4IpQnwB
+VITE_EMAILJS_SERVICE_ID=
+VITE_EMAILJS_TEMPLATE_ID=
+VITE_EMAILJS_PUBLIC_KEY=
 ```
 
 ### **Observações Importantes**
 
-- O backend não utiliza banco de dados, todos os dados são armazenados em memória.
 - O EmailJS precisa ser configurado corretamente para que os alertas de frequência funcionem.
 - A validação de nome único é case-insensitive (ex: "João" e "joão" são considerados iguais).
 - O sistema envia e-mail apenas no cadastro (não na edição) quando a frequência é < 75%.
 
 ---
 
-## Exemplo de Entrada (resumo do PDF)
-
----
-
-## ▶Executando o backend (100% local, sem banco)
-
-Toda a persistência é feita em memória usando um dicionário dentro de `backend/service/estudanteService.py`. Ao reiniciar o servidor, os dados são resetados, facilitando os testes locais.
+## ▶Executando o backend 
 
 1. **Criar e ativar o ambiente virtual (opcional)**
    python -m venv .venv
@@ -200,3 +193,10 @@ O diretório `frontend/` contém um app React minimalista que consome a API. Par
 2. Em cada template inclua as variáveis: `{{name}}`, `{{email}}`, `{{message}}`, `{{title}}` e `{{time}}`.
 3. Copie `Service ID`, `Template ID For Me`, `Template ID For Sender` e `Public Key`.
 4. Tanto o formulário “Contato” quanto o alerta automático de frequência usam esse único template para disparar os e-mails via `@emailjs/browser`.
+
+#Segue exemplo de email:
+
+
+https://github.com/user-attachments/assets/7fc9959d-478e-4adb-aaeb-d242af3628f3
+
+
