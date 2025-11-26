@@ -197,6 +197,9 @@ O diretório `frontend/` contém um app React minimalista que consome a API. Par
 # Segue exemplo de email:
 
 
-https://github.com/user-attachments/assets/7fc9959d-478e-4adb-aaeb-d242af3628f3
+
+
+https://github.com/user-attachments/assets/17eb35d2-cf41-4416-85c6-0c145999536b
+
 
 
